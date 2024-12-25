@@ -173,6 +173,11 @@
 		"currencyUpdatedSuccessfully": "Devise mise à jour avec succès!",
 		"currencyNotFound": "Aucune devise trouvée",
 		"missingCurrencyId": "Identifiant de la devise manquant!",
-		"currencyListedSuccessfully": "Monnaie listée avec succès"
+		"currencyListedSuccessfully": "Monnaie listée avec succès",
+		"neighborhoodCreatedSuccessfully": "quartier créé avec succès",
+		"invalidDistrictId": "ID de district invalide",
+		"neighborhoodFetchedSuccessfully": "quartier récupéré avec succès",
+		"neighborhoodsFetchedSuccessfully": "quartiers récupérés avec succès",
+		"neighborhoodUpdatedSuccessfully": "quartier mis à jour avec succès"
 	}
 }

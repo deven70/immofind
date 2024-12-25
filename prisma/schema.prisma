@@ -33,6 +33,7 @@ model Agencies {
   updated_by                                                String?         @db.Uuid
   publishing_status_id                                      Int             @default(1)
   sub_user_id                                               String?         @db.Uuid
+  country_code                                              String?         @db.VarChar
   agency_packages_agencies_agency_packagesToagency_packages AgencyPackages? @relation("agencies_agency_packagesToagency_packages", fields: [agency_packages], references: [id], onDelete: NoAction, onUpdate: NoAction)
   meta_data                                                 MetaData?       @relation(fields: [meta_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 

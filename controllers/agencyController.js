@@ -33,6 +33,7 @@ export const createAgency = async (req, res) => {
     license_number,
     picture,
     cover,
+    country_code,
     agency_packages,
   } = req.body;
 
@@ -81,6 +82,7 @@ export const createAgency = async (req, res) => {
       linkedin_link,
       instagram_link,
       whatsup_number,
+      country_code,
       service_area,
       tax_number,
       license_number,

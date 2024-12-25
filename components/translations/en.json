@@ -173,6 +173,11 @@
 		"currencyNotFound": "No Currency Found",
 		"missingCurrencyId": "Currency Id Missing!",
 		"currencyDeletedSuccessfully": "Currency Deleted Successfully",
-		"currencyListedSuccessfully": "Currency Listed Successfully"
+		"currencyListedSuccessfully": "Currency Listed Successfully",
+		"neighborhoodCreatedSuccessfully": "neighborhood Created Successfully",
+		"invalidDistrictId": "invalid DistrictId",
+		"neighborhoodFetchedSuccessfully": "neighborhood Fetched Successfully",
+		"neighborhoodsFetchedSuccessfully": "neighborhoods Fetched Successfully",
+		"neighborhoodUpdatedSuccessfully": "neighborhood Updated Successfully"
 	}
 }
