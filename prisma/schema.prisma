@@ -108,6 +108,8 @@ model Neighborhoods {
   updated_by      String?           @db.Uuid
   district        Districts         @relation(fields: [district_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "district_foreign_key")
   langTranslation LangTranslations? @relation(fields: [lang_id], references: [id])
+  propertyDetails PropertyDetails[] @relation("PropertyNeighborhoods")
+  projectDetails  ProjectDetails[]  @relation("ProjectNeighborhoods")
 
   @@map("neighborhoods")
 }
@@ -160,7 +162,9 @@ model PropertyDetails {
   latitude                                                          String                @db.VarChar
   longitude                                                         String                @db.VarChar
   currency_id                                                       String?               @db.Uuid
+  neighborhoods_id                                                  String?               @db.Uuid
   vr_link                                                           String?               @db.VarChar
+  address                                                           String?               @db.VarChar
   video                                                             String?               @db.VarChar
   status                                                            Boolean               @default(false)
   user_id                                                           String                @db.Uuid
@@ -187,6 +191,7 @@ model PropertyDetails {
   users                                                             Users                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "property_user_foreign_key")
   states                                                            States?               @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "state_foreign_key")
   currency                                                          Currency?             @relation("PropertyCurrency", fields: [currency_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  neighborhoods                                                     Neighborhoods?        @relation("PropertyNeighborhoods", fields: [neighborhoods_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   property_meta_details                                             PropertyMetaDetails[]
 
   @@map("property_details")
@@ -199,8 +204,10 @@ model ProjectDetails {
   state_id                      String               @db.Uuid
   city_id                       String               @db.Uuid
   district_id                   String               @db.Uuid
+  neighborhoods_id              String?              @db.Uuid
   latitude                      String               @db.VarChar
   longitude                     String               @db.VarChar
+  address                       String?              @db.VarChar
   vr_link                       String?              @db.VarChar
   picture                       String?              @db.VarChar
   video                         String?              @db.VarChar
@@ -219,6 +226,7 @@ model ProjectDetails {
   lang_translations_title       LangTranslations     @relation("project_title_translation", fields: [title], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                         Users                @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "project_user_foreign_key")
   states                        States               @relation(fields: [state_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "state_project_foreign_key")
+  neighborhoods                 Neighborhoods?       @relation("ProjectNeighborhoods", fields: [neighborhoods_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   project_meta_details          ProjectMetaDetails[]
   other_property_details        PropertyDetails[]    @relation("property_detailsToproperty_details")
 

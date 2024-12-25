@@ -264,6 +264,16 @@ export const getAllProperty = async (req, res) => {
               status: true
           }
         },
+        neighborhoods: {
+          select: {
+              langTranslation: {
+              select: {
+                  en_string: true,
+                  fr_string: true,
+              },
+              },
+          },
+          },
         property_types: {
           select: {
             id: true,
@@ -281,6 +291,7 @@ export const getAllProperty = async (req, res) => {
 
     // Simplify and process the property details
     const simplifiedProperties = properties.map((property) => {
+      console.log(property);
       const description =
         lang === 'fr'
           ? property.lang_translations_property_details_descriptionTolang_translations.fr_string
@@ -293,6 +304,10 @@ export const getAllProperty = async (req, res) => {
         lang === 'fr'
           ? property.property_types?.lang_translations?.fr_string
           : property.property_types?.lang_translations?.en_string;
+      const neighborhood =
+        lang === 'fr'
+          ? property.neighborhoods?.langTranslation?.fr_string
+          : property.neighborhoods?.langTranslation?.en_string;
 
       const metaDetails = property.property_meta_details.map((meta) => {
         const langObj =
@@ -328,19 +343,21 @@ export const getAllProperty = async (req, res) => {
         video: property.video,
         latitude: property.latitude,
         longitude: property.longitude,
+        address: property.address,
         size: property.size,
         price: property.price,
         created_at: property.created_at,
         bathRooms,
         bedRooms,
-        district: property.districts?.name || null,
+        district: 
+        property.districts?.langTranslation &&
+        (lang === "fr"
+          ? property.districts.langTranslation.fr_string
+          : property.districts.langTranslation.en_string),
         images: property.images_data,
         meta_details: metaDetails,
-        currency_details: {
-          name: property.currency?.name || null,
-          symbol: property.currency?.symbol || null,
-          status: property.currency?.status || null,
-        },
+        currency: property.currency?.symbol || null,
+        neighborhood,
         type,
       };
     });
@@ -381,11 +398,13 @@ export const createProperty = async (req, res) => {
             description_fr,
             price,
             currency_id,
+            neighborhoods_id,
             district_id,
             city_id,
             state_id,
             latitude,
             longitude,
+            address,
             vr_link,
             picture,
             video,
@@ -448,11 +467,13 @@ export const createProperty = async (req, res) => {
                 description: descriptionTranslation.id, // Linking the description translation
                 price: price,
                 currency_id: currency_id,
+                neighborhoods_id: neighborhoods_id,
                 district_id: district_id,
                 city_id: city_id,
                 state_id: state_id,
                 latitude: latitude,
                 longitude: longitude,
+                address: address,
                 project_id: project_id || null,
                 vr_link: vr_link || null,
                 picture: picture || null,
@@ -528,6 +549,16 @@ export const createProperty = async (req, res) => {
                           status: true,
                       },
                     },
+                    neighborhoods: {
+                      select: {
+                          langTranslation: {
+                          select: {
+                              en_string: true,
+                              fr_string: true,
+                          },
+                          },
+                      },
+                  },
 
                 property_types: {
                     select: {
@@ -558,6 +589,7 @@ export const createProperty = async (req, res) => {
             transaction_type: createdProperty.transaction,
             latitude: createdProperty.latitude,
             longitude: createdProperty.longitude,
+            address: createdProperty.address,
             size: createdProperty.size,
             price: createdProperty.price,
             picture: createdProperty.picture,
@@ -585,12 +617,35 @@ export const createProperty = async (req, res) => {
                 ? createdProperty.property_types?.lang_translations?.fr_string
                 : createdProperty.property_types?.lang_translations?.en_string,
                 
-            currency_details: createdProperty.currency?{
-                name: createdProperty.currency.name,
-                symbol: createdProperty.currency.symbol,
-                status: createdProperty.currency.status,
-            }
+            // currency_details: createdProperty.currency?{
+            //     name: createdProperty.currency.name,
+            //     symbol: createdProperty.currency.symbol,
+            //     status: createdProperty.currency.status,
+            // }
+            // : null,
+
+            currency: createdProperty.currency
+            ? createdProperty.currency.symbol
             : null,
+
+
+            neighborhood: createdProperty.neighborhoods?.langTranslation
+                ? lang === 'fr'
+                ? createdProperty.neighborhoods.langTranslation.fr_string
+                : createdProperty.neighborhoods.langTranslation.en_string
+                : null,
+
+
+
+            // neighborhood_details: createdProperty.neighborhoods?{
+            //     district_id: createdProperty.neighborhoods.district_id,
+            //     lang_id: createdProperty.neighborhoods.lang_id,
+            //     latitude: createdProperty.neighborhoods.latitude,
+            //     longitude: createdProperty.neighborhoods.longitude,
+            //     created_at: createdProperty.neighborhoods.created_at,
+            //     updated_at: createdProperty.neighborhoods.updated_at,
+            // }
+            // : null,
         };
 
         // Return the response with the created property data
@@ -610,9 +665,11 @@ export const updateProperty = async (req, res) => {
     description_fr,
     price,
     currency_id,
+    neighborhoods_id,
     district_id,
     latitude,
     longitude,
+    address,
     vr_link,
     picture,
     video,
@@ -671,7 +728,9 @@ export const updateProperty = async (req, res) => {
       price: price !== undefined ? price : existingProperty.price,
       district_id: district_id !== undefined ? district_id : existingProperty.district_id,
       latitude: latitude !== undefined ? latitude : existingProperty.latitude,
+      address: address !== undefined ? address : existingProperty.address,
       currency_id: currency_id !== undefined ? currency_id : existingProperty.currency_id,
+      neighborhoods_id: neighborhoods_id !== undefined ? neighborhoods_id : existingProperty.neighborhoods_id,
       longitude: longitude !== undefined ? longitude : existingProperty.longitude,
       vr_link: vr_link !== undefined ? vr_link : existingProperty.vr_link,
       picture: picture !== undefined ? picture : existingProperty.picture,
@@ -725,6 +784,20 @@ export const updateProperty = async (req, res) => {
             },
           },
         },
+        neighborhoods: {
+          select: {
+            langTranslation: {
+              select: { en_string: true, fr_string: true },
+            },
+          },
+        },
+        currency: { // Fetch currency details
+          select: {
+              name: true,
+              symbol: true,
+              status: true,
+          },
+        },
         property_meta_details: {
           select: {
             value: true,
@@ -772,9 +845,10 @@ export const updateProperty = async (req, res) => {
       transaction_type: updatedPropertyDetails.transaction,
       latitude: updatedPropertyDetails.latitude,
       longitude: updatedPropertyDetails.longitude,
+      address: updatedPropertyDetails.address,
       size: updatedPropertyDetails.size,
       price: updatedPropertyDetails.price,
-      currency_id: updatedPropertyDetails.currency_id,
+      currency: updatedPropertyDetails.currency.symbol,
       bathRooms:
         updatedPropertyDetails.property_meta_details.find(
           (meta) => meta.property_type_listings.key === "bathrooms"
@@ -788,6 +862,11 @@ export const updateProperty = async (req, res) => {
         (lang === "fr"
           ? updatedPropertyDetails.districts.langTranslation.fr_string
           : updatedPropertyDetails.districts.langTranslation.en_string),
+      neighborhood:
+        updatedPropertyDetails.neighborhoods?.langTranslation &&
+        (lang === "fr"
+          ? updatedPropertyDetails.neighborhoods.langTranslation.fr_string
+          : updatedPropertyDetails.neighborhoods.langTranslation.en_string),
       meta_details: updatedPropertyDetails.property_meta_details.map((meta) => ({
         id: meta.property_type_listings?.id || null,
         type: meta.property_type_listings?.type || null,

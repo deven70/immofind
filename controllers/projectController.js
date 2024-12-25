@@ -52,6 +52,16 @@ export const getAllProjects = async (req, res) => {
             langTranslation: { select: { fr_string: true, en_string: true } } 
           },
         },
+        neighborhoods: {
+          select: {
+              langTranslation: {
+              select: {
+                  en_string: true,
+                  fr_string: true,
+              },
+              },
+          },
+        },
         project_meta_details: {
           select: {
             value: true,
@@ -92,8 +102,10 @@ export const getAllProjects = async (req, res) => {
       state: lang === 'fr' ? createdProject.states.lang.fr_string : createdProject.states.lang.en_string,
       city: lang === 'fr' ? createdProject.cities.lang.fr_string : createdProject.cities.lang.en_string,
       district: lang === 'fr' ? createdProject.districts.langTranslation.fr_string : createdProject.districts.langTranslation.en_string,
+      neighborhood: lang === 'fr' ? createdProject.neighborhoods.langTranslation.fr_string : createdProject.neighborhoods.langTranslation.en_string,
       latitude: createdProject.latitude,
       longitude: createdProject.longitude,
+      address: createdProject.address,
       vr_link: createdProject.vr_link,
       picture: createdProject.picture,
       video: createdProject.video,
@@ -270,13 +282,14 @@ export const createProject = async (req, res) => {
       district_id,
       latitude,
       longitude,
+      address,
       vr_link,
       picture,
       video,
       user_id,
       link_uuid,
       meta_details,
-      
+      neighborhoods_id
     } = req.body;
 
     // Validate required fields
@@ -291,7 +304,8 @@ export const createProject = async (req, res) => {
       !latitude ||
       !longitude ||
       !user_id ||
-      !link_uuid
+      !link_uuid ||
+      !neighborhoods_id
     ) {
       return response.error(res, res.__('messages.allFieldsRequired'), null, 400);
     }
@@ -352,8 +366,10 @@ export const createProject = async (req, res) => {
         state_id: state_id,
         city_id: city_id,
         district_id: district_id,
+        neighborhoods_id: neighborhoods_id,
         latitude: latitude,
         longitude: longitude,
+        address: address,
         vr_link: vr_link || null,
         picture: picture || null,
         video: video || null,
@@ -405,6 +421,13 @@ export const createProject = async (req, res) => {
             langTranslation: { select: { fr_string: true, en_string: true } } 
           },
         },
+        neighborhoods: {
+          select: {
+            langTranslation: {
+              select: { en_string: true, fr_string: true },
+            },
+          },
+        },
         project_meta_details: {
           select: {
             value: true,
@@ -436,11 +459,29 @@ export const createProject = async (req, res) => {
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
       price: createdProject.price,
-      state: createdProject.states?.name || null,
-      city: createdProject.cities?.name || null,
-      district: createdProject.districts?.name || null,
+      state:
+      createdProject.states?.lang &&
+        (lang === "fr"
+          ? createdProject.states.lang.fr_string
+          : createdProject.states.lang.en_string),
+      city:
+      createdProject.cities?.lang &&
+        (lang === "fr"
+          ? createdProject.cities.lang.fr_string
+          : createdProject.cities.lang.en_string),
+      district:
+      createdProject.districts?.langTranslation &&
+        (lang === "fr"
+          ? createdProject.districts.langTranslation.fr_string
+          : createdProject.districts.langTranslation.en_string),
+      neighborhood:
+      createdProject.neighborhoods?.langTranslation &&
+        (lang === "fr"
+          ? createdProject.neighborhoods.langTranslation.fr_string
+          : createdProject.neighborhoods.langTranslation.en_string),
       latitude: createdProject.latitude,
       longitude: createdProject.longitude,
+      address: createdProject.address,
       vr_link: createdProject.vr_link,
       picture: createdProject.picture,
       video: createdProject.video,
@@ -479,11 +520,13 @@ export const updateProject = async (req, res) => {
       description_en,
       description_fr,
       price,
+      neighborhoods_id,
       state_id,
       city_id,
       district_id,
       latitude,
       longitude,
+      address,
       vr_link,
       picture,
       video,
@@ -562,8 +605,10 @@ export const updateProject = async (req, res) => {
         state_id: state_id,
         city_id: city_id,
         district_id: district_id,
+        neighborhoods_id: neighborhoods_id,
         latitude: latitude,
         longitude: longitude,
+        address: address,
         vr_link: vr_link || null,
         picture: picture || null,
         video: video || null,
@@ -602,13 +647,26 @@ export const updateProject = async (req, res) => {
           },
         },
         states: {
-          select: { name: true },
+          select: { 
+            lang: { select: { fr_string: true, en_string: true } } 
+          },
         },
         cities: {
-          select: { name: true },
+          select: { 
+            lang: { select: { fr_string: true, en_string: true } } 
+          },
+        },
+        neighborhoods: {
+          select: {
+            langTranslation: {
+              select: { en_string: true, fr_string: true },
+            },
+          },
         },
         districts: {
-          select: { name: true },
+          select: { 
+            langTranslation: { select: { fr_string: true, en_string: true } } 
+          },
         },
         project_meta_details: {
           select: {
@@ -641,11 +699,29 @@ export const updateProject = async (req, res) => {
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
       price: createdProject.price,
-      state: createdProject.states?.name || null,
-      city: createdProject.cities?.name || null,
-      district: createdProject.districts?.name || null,
+      neighborhood:
+      createdProject.neighborhoods?.langTranslation &&
+        (lang === "fr"
+          ? createdProject.neighborhoods.langTranslation.fr_string
+          : createdProject.neighborhoods.langTranslation.en_string),
+      state:
+      createdProject.states?.lang &&
+        (lang === "fr"
+          ? createdProject.states.lang.fr_string
+          : createdProject.states.lang.en_string),
+      city: 
+      createdProject.cities?.lang &&
+        (lang === "fr"
+          ? createdProject.cities.lang.fr_string
+          : createdProject.cities.lang.en_string),
+      district:
+      createdProject.districts?.langTranslation &&
+        (lang === "fr"
+          ? createdProject.districts.langTranslation.fr_string
+          : createdProject.districts.langTranslation.en_string),
       latitude: createdProject.latitude,
       longitude: createdProject.longitude,
+      address: createdProject.address,
       vr_link: createdProject.vr_link,
       picture: createdProject.picture,
       video: createdProject.video,
