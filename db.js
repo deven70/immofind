@@ -9,6 +9,7 @@ const dbConfig = {
   database: process.env.PG_DATABASE,
 };
 
+
 const pool = new Pool(dbConfig);
 
 module.exports = pool;
