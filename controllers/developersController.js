@@ -25,6 +25,7 @@ export const createDeveloper = async (req, res) => {
     whatsappPhone,
     service_area,
     tax_number,
+    country_code,
     license_number,
   } = req.body;
 
@@ -79,6 +80,7 @@ export const createDeveloper = async (req, res) => {
       whatsappPhone,
       serviceArea: service_area,
       taxNumber: tax_number,
+      country_code:country_code,
       licenseNumber: license_number,
       created_by: existingUser.id,
     };

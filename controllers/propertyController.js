@@ -391,6 +391,7 @@ export const getAllProperty = async (req, res) => {
 export const createProperty = async (req, res) => {
     try {
         // Extracting the data from the request body
+        const createdBy = req.user.id;
         const {
             title_en,
             title_fr,
@@ -482,6 +483,7 @@ export const createProperty = async (req, res) => {
                 type: type_id,
                 transaction: transaction,
                 size: size || null, // Optional, can be null
+                created_by:createdBy,
                 property_meta_details: {
                     create: meta_details.map((meta) => ({
                         value: meta.value,
@@ -657,6 +659,7 @@ export const createProperty = async (req, res) => {
 };
 
 export const updateProperty = async (req, res) => {
+  const updatedBy = req.user.id;
   const {
     propertyId, // ID of the property to update
     title_en,
@@ -739,6 +742,7 @@ export const updateProperty = async (req, res) => {
       type: type_id !== undefined ? type_id : existingProperty.type,
       transaction: transaction !== undefined ? transaction : existingProperty.transaction,
       size: size !== undefined ? size : existingProperty.size,
+      updated_by:updatedBy
     };
 
   console.log(updateData,"updateData")
@@ -752,12 +756,12 @@ export const updateProperty = async (req, res) => {
     // Update meta details: delete existing and recreate
     if (meta_details && meta_details.length > 0) {
       await prisma.propertyMetaDetails.deleteMany({
-        where: { property_id: propertyId },
+        where: { property_detail_id: propertyId },
       });
 
       await prisma.propertyMetaDetails.createMany({
         data: meta_details.map((meta) => ({
-          property_id: propertyId,
+          property_detail_id: propertyId,
           value: meta.value,
           property_type_id: meta.property_type_id,
         })),

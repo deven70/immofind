@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 // Create Neighborhood
 export const createNeighborhood = async (req, res) => {
   try {
-    const { district_id, en_name, fr_name, latitude, longitude } = req.body;
+    const { district_id, en_name, fr_name, latitude, longitude, lang } = req.body;
 
     // Validate required fields
     if (!district_id || (!en_name && !fr_name)) {
@@ -68,11 +68,46 @@ export const createNeighborhood = async (req, res) => {
       },
     });
 
+    // Fetch the neighborhood with the translated names based on the requested language
+    const createdNeighborhood = await prisma.neighborhoods.findUnique({
+      where: { id: neighborhood.id },
+      include: {
+        langTranslation: true, // Include langTranslation data to fetch the actual name
+      },
+    });
+
+    // Prepare the response based on the selected language
+    let neighborhoodName;
+    if (lang === 'en') {
+      neighborhoodName = createdNeighborhood.langTranslation.en_string;
+    } else if (lang === 'fr') {
+      neighborhoodName = createdNeighborhood.langTranslation.fr_string;
+    } else {
+      return response.error(res, res.__('messages.invalidLanguage')); // Error if language is invalid
+    }
+
     return response.success(
       res,
       res.__('messages.neighborhoodCreatedSuccessfully'),
-      neighborhood
+      {
+        id: createdNeighborhood.id,
+        district_id: createdNeighborhood.district_id,
+        neighborhood_name: neighborhoodName, // Return the correct name based on the language
+        latitude: createdNeighborhood.latitude,
+        longitude: createdNeighborhood.longitude,
+        is_deleted: createdNeighborhood.is_deleted,
+        created_at: createdNeighborhood.created_at,
+        updated_at: createdNeighborhood.updated_at,
+        created_by: createdNeighborhood.created_by,
+        updated_by: createdNeighborhood.updated_by
+      }
     );
+
+    // return response.success(
+    //   res,
+    //   res.__('messages.neighborhoodCreatedSuccessfully'),
+    //   neighborhood
+    // );
   } catch (error) {
     console.error('Error creating neighborhood:', error);
     return response.error(
@@ -124,8 +159,8 @@ export const getNeighborhoodsByDistrict = async (req, res) => {
         id: true,
         langTranslation: {
           select: {
-            fr_string: isFrench,
-            en_string: !isFrench,
+            fr_string: true,
+            en_string: true,
           },
         },
         latitude: true,
@@ -141,7 +176,9 @@ export const getNeighborhoodsByDistrict = async (req, res) => {
 
     const transformedNeighborhoods = neighborhoods.map((neighborhood) => ({
       id: neighborhood.id,
-      name: neighborhood.langTranslation?.fr_string || neighborhood.langTranslation?.en_string,
+      name: lang === 'fr'
+        ? neighborhood.langTranslation?.fr_string
+        : neighborhood.langTranslation?.en_string,
       latitude: neighborhood.latitude,
       longitude: neighborhood.longitude,
       created_at: neighborhood.created_at,
@@ -224,27 +261,64 @@ export const getNeighborhoodById = async (req, res) => {
 export const updateNeighborhood = async (req, res) => {
   try {
     const { id } = req.params;
-    const { en_name, fr_name, latitude, longitude } = req.body;
+    const { en_name, fr_name, latitude, longitude, lang } = req.body;
 
     if (!id) {
       return response.error(res, res.__('messages.neighborhoodIdRequired'));
     }
 
-    const updatedNeighborhood = await prisma.neighborhoods.update({
+    // Fetch the existing neighborhood with lang_id
+    const neighborhood = await prisma.neighborhoods.findUnique({
       where: { id },
-      data: {
-        langTranslation: {
-          update: {
-            en_string: en_name,
-            fr_string: fr_name,
-          },
-        },
-        latitude,
-        longitude,
+      select: {
+        lang_id: true, // Fetch lang_id for language updates
       },
     });
 
-    return response.success(res, res.__('messages.neighborhoodUpdatedSuccessfully'), updatedNeighborhood);
+    if (!neighborhood) {
+      return response.error(res, res.__('messages.neighborhoodNotFound'));
+    }
+
+    // Update language translations
+    await prisma.langTranslations.update({
+      where: { id: neighborhood.lang_id },
+      data: {
+        en_string: en_name,
+        fr_string: fr_name,
+      },
+    });
+
+    // Update neighborhood details
+    const updatedNeighborhood = await prisma.neighborhoods.update({
+      where: { id },
+      data: {
+        latitude,
+        longitude,
+      },
+      include: {
+        langTranslation: true, // Include language translations in response
+      },
+    });
+
+    // Determine which name to show based on language
+    const name =
+      lang === 'fr'
+        ? updatedNeighborhood.langTranslation.fr_string
+        : updatedNeighborhood.langTranslation.en_string;
+
+    // Prepare response object
+    const responseData = {
+      id: updatedNeighborhood.id,
+      district_id: updatedNeighborhood.district_id,
+      name, // Include name instead of lang_id
+      latitude: updatedNeighborhood.latitude,
+      longitude: updatedNeighborhood.longitude,
+      is_deleted: updatedNeighborhood.is_deleted,
+      created_at: updatedNeighborhood.created_at,
+      updated_at: updatedNeighborhood.updated_at,
+    };
+
+    return response.success(res, res.__('messages.neighborhoodUpdatedSuccessfully'), responseData);
   } catch (error) {
     console.error('Error updating neighborhood:', error);
     return response.error(res, res.__('messages.internalServerError'), { message: error.message });

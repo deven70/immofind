@@ -160,8 +160,8 @@ model PropertyDetails {
   link_uuid                                                         String?               @db.Uuid
   price                                                             Int
   district_id                                                       String                @db.Uuid
-  latitude                                                          String                @db.VarChar
-  longitude                                                         String                @db.VarChar
+  latitude                                                          Float?                
+  longitude                                                         Float?                
   currency_id                                                       String?               @db.Uuid
   neighborhoods_id                                                  String?               @db.Uuid
   vr_link                                                           String?               @db.VarChar
@@ -201,13 +201,12 @@ model PropertyDetails {
 model ProjectDetails {
   id                            String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   link_uuid                     String               @db.VarChar
-  price                         Int?
   state_id                      String               @db.Uuid
   city_id                       String               @db.Uuid
   district_id                   String               @db.Uuid
   neighborhoods_id              String?              @db.Uuid
-  latitude                      String               @db.VarChar
-  longitude                     String               @db.VarChar
+  latitude                      Float?               
+  longitude                     Float?               
   address                       String?              @db.VarChar
   vr_link                       String?              @db.VarChar
   picture                       String?              @db.VarChar
@@ -427,6 +426,7 @@ model Developers {
   updated_by         String?          @db.Uuid
   agencyPackageId    String?          @map("agency_package_id")
   credit             String?          @db.VarChar
+  country_code       String?          @db.VarChar
   agencyPackages     AgencyPackages[] @relation("DevelopersToAgencyPackages")
 
   @@map("developers")

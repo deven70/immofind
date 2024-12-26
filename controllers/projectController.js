@@ -98,7 +98,6 @@ export const getAllProjects = async (req, res) => {
       user_image: createdProject.users?.image || null,
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
-      price: createdProject.price,
       state: lang === 'fr' ? createdProject.states.lang.fr_string : createdProject.states.lang.en_string,
       city: lang === 'fr' ? createdProject.cities.lang.fr_string : createdProject.cities.lang.en_string,
       district: lang === 'fr' ? createdProject.districts.langTranslation.fr_string : createdProject.districts.langTranslation.en_string,
@@ -225,7 +224,6 @@ export const getAgentDeveloperProjects = async (req, res) => {
       user_image: createdProject.users?.image || null,
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
-      price: createdProject.price,
       state: lang === 'fr' ? createdProject.states.lang.fr_string : createdProject.states.lang.en_string,
       city: lang === 'fr' ? createdProject.cities.lang.fr_string : createdProject.cities.lang.en_string,
       district: lang === 'fr' ? createdProject.districts.langTranslation.fr_string : createdProject.districts.langTranslation.en_string,
@@ -271,12 +269,12 @@ export const getAgentDeveloperProjects = async (req, res) => {
 export const createProject = async (req, res) => {
   try {
     // Extracting data from the request body
+    const createdBy = req.user.id;
     const {
       title_en,
       title_fr,
       description_en,
       description_fr,
-      price,
       state_id,
       city_id,
       district_id,
@@ -362,7 +360,6 @@ export const createProject = async (req, res) => {
       data: {
         title: titleTranslation.id, // Link to the title translation
         description: descriptionTranslation.id, // Link to the description translation
-        price: price,
         state_id: state_id,
         city_id: city_id,
         district_id: district_id,
@@ -375,6 +372,7 @@ export const createProject = async (req, res) => {
         video: video || null,
         user_id: user_id, // The user creating the project
         link_uuid: link_uuid,
+        created_by: createdBy,
         project_meta_details: {
           create: meta_details.map((meta) => ({
             value: meta.value,
@@ -458,7 +456,6 @@ export const createProject = async (req, res) => {
       user_image: createdProject.users?.image || null,
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
-      price: createdProject.price,
       state:
       createdProject.states?.lang &&
         (lang === "fr"
@@ -513,13 +510,13 @@ export const createProject = async (req, res) => {
 export const updateProject = async (req, res) => {
   try {
     // Extracting data from the request body
+    const updatedBy = req.user.id;
     const {
       project_id,
       title_en,
       title_fr,
       description_en,
       description_fr,
-      price,
       neighborhoods_id,
       state_id,
       city_id,
@@ -542,7 +539,6 @@ export const updateProject = async (req, res) => {
       !title_fr ||
       !description_en ||
       !description_fr ||
-      !price ||
       !state_id ||
       !city_id ||
       !district_id ||
@@ -601,7 +597,6 @@ export const updateProject = async (req, res) => {
       data: {
         title: titleTranslation.id, // Link to the updated title translation
         description: descriptionTranslation.id, // Link to the updated description translation
-        price: price,
         state_id: state_id,
         city_id: city_id,
         district_id: district_id,
@@ -614,6 +609,7 @@ export const updateProject = async (req, res) => {
         video: video || null,
         user_id: user_id, // The user updating the project
         link_uuid: link_uuid,
+        updated_by:updatedBy,
         project_meta_details: {
           deleteMany: {}, // Delete old meta details
           create: meta_details.map((meta) => ({
@@ -698,7 +694,6 @@ export const updateProject = async (req, res) => {
       user_image: createdProject.users?.image || null,
       title: lang === 'fr' ? createdProject.lang_translations_title.fr_string : createdProject.lang_translations_title.en_string,
       description: lang === 'fr' ? createdProject.lang_translations_description.fr_string : createdProject.lang_translations_description.en_string,
-      price: createdProject.price,
       neighborhood:
       createdProject.neighborhoods?.langTranslation &&
         (lang === "fr"
