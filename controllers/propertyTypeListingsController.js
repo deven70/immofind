@@ -122,33 +122,31 @@ export const checkProjectTypeListing = async (req, res) => {
 
 
 export const createPropertyTypeListing = async (req, res) => {
-  const { en_string, fr_string, icon, type, category, created_by, lang, key } = req.body;
+  const { en_string, fr_string, icon, type, category, created_by, key } = req.body;
 
   // Ensure the required fields are provided
   if (!en_string || !fr_string || !icon || !type || !category || !key) {
-        return response.error(res, res.__('messages.allFieldsRequired'), null, 400);
-
+    return response.error(res, res.__('messages.allFieldsRequired'), null, 400);
   }
 
   try {
-
-    const checkPropertTypeExits =await prisma.propertyTypeListings.findFirst({ 
-      where: { 
+    const checkPropertyTypeExists = await prisma.propertyTypeListings.findFirst({
+      where: {
         lang_translations: {
           OR: [
             { en_string: en_string },
             { fr_string: fr_string },
           ],
-        }
-      } 
+        },
+      },
     });
-    if(!checkPropertTypeExits){
 
-    // Step 1: Insert translations into LangTranslations
+    if (!checkPropertyTypeExists) {
+      // Step 1: Insert translations into LangTranslations
       const langTranslation = await prisma.langTranslations.create({
         data: {
-          en_string: en_string,  // English translation
-          fr_string: fr_string,  // French translation
+          en_string: en_string, // English translation
+          fr_string: fr_string, // French translation
         },
       });
 
@@ -157,13 +155,14 @@ export const createPropertyTypeListing = async (req, res) => {
         data: {
           icon: icon,
           type: type,
+          key: key,
+          category: BigInt(category), // Ensure category is properly cast as BigInt
+          created_by: created_by,
           lang_translations: {
-            category: category,
             connect: {
-              id: langTranslation.id,  // Link to the newly created LangTranslation
+              id: langTranslation.id, // Link to the newly created LangTranslation
             },
           },
-          key: key,
         },
       });
 
@@ -173,15 +172,16 @@ export const createPropertyTypeListing = async (req, res) => {
         category: propertyTypeListing.category.toString(), // Convert BigInt to string
       };
 
-      return response.success( res, res.__('messages.propertyTypeListingCreatedSuccessfully'), responseData );
-    }else{
-      return response.error( res, res.__('messages.propertyTypeListingExists') );
+      return response.success(res, res.__('messages.propertyTypeListingCreatedSuccessfully'), responseData);
+    } else {
+      return response.error(res, res.__('messages.propertyTypeListingExists'));
     }
   } catch (error) {
     console.error('Error creating property type listing:', error);
     return response.serverError(res, error);
   }
 };
+
 
 export const updatePropertyTypeListing = async (req, res) => {
   const { id, en_string, fr_string, icon, type, category, updated_by, lang, key } = req.body;
