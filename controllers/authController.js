@@ -355,65 +355,74 @@ export const checkUserExists = async (req, res) => {
 export const loginUser = async (req, res) => {
     try {
         const { email_address, phone_number, code } = req.body;
-        
-        if(email_address === '' && phone_number === '') {
+
+        if (!email_address && !phone_number) {
             return await response.error(res, res.__('messages.fieldError'));
         }
 
-        if( email_address !== '' && phone_number === '') {
-            
-            const checkUser = await UserModel.getUser(email_address,'');
-            let user_information = true;
-            if(checkUser.mobile_number === 0) {
-                user_information = false;
+        if (email_address && !phone_number) {
+            const checkUser = await UserModel.getUser(email_address, '');
+            if (!checkUser) {
+                return await response.error(res, res.__('messages.userNotFound'));
             }
-            if ( !code) {
+
+            if (!code) {
                 return await response.error(res, res.__('messages.fieldError'));
             }
 
-            const user = await UserModel.getUserWithEmailOTP(email_address, code);
-            if (user) {
-                const CreateToken = await jwtGenerator.generateToken(user.id, user.email_address);
-                const responseData = {
-                    user_information,
-                    userProfile: user,
-                    token: CreateToken
-                };
-                return await response.success(res, res.__('messages.loginSuccessfully'), responseData);
-            } else {
+            if (checkUser.email_password_code !== parseInt(code, 10)) {
                 return await response.error(res, res.__('messages.userCheckEmailCode'));
             }
-        }
-        else if( email_address === '' && phone_number !== '') {
-            const checkPhonember = await commonFunction.checkPhonember(phone_number);
-            if(!checkPhonember){
+
+            const CreateToken = await jwtGenerator.generateToken(checkUser.id, checkUser.email_address);
+            const responseData = {
+                user_information: !!checkUser.mobile_number,
+                userProfile: checkUser,
+                token: CreateToken
+            };
+
+            // Invalidate OTP
+            await UserModel.updateUser({ id: checkUser.id }, { email_password_code: null });
+
+            return await response.success(res, res.__('messages.loginSuccessfully'), responseData);
+        } else if (!email_address && phone_number) {
+            const checkPhoneNumber = await commonFunction.checkPhonember(phone_number);
+            if (!checkPhoneNumber) {
                 return response.error(res, "Please enter a valid phone number.", null);
             }
-            
-            const checkUser = await UserModel.getUser('',phone_number);
-            let user_information = true;
-            if(checkUser.email_address === null) {
-                user_information = false;
+
+            const checkUser = await UserModel.getUser('', phone_number);
+            if (!checkUser) {
+                return await response.error(res, res.__('messages.userNotFound'));
             }
-            const user = await UserModel.getUserWithPhoneOTP(phone_number, code);
-            if (user) {
-                const CreateToken = await jwtGenerator.generateToken(user.id, user.email_address);
-                const responseData = {
-                    user_information,
-                    userProfile: user,
-                    token: CreateToken
-                };
-                return await response.success(res, res.__('messages.loginSuccessfully'), responseData);
-            } else {
+
+            if (!code) {
+                return await response.error(res, res.__('messages.fieldError'));
+            }
+
+            if (checkUser.phone_password_code !== parseInt(code, 10)) {
                 return await response.error(res, res.__('messages.passwordDostMatch'));
             }
+
+            const CreateToken = await jwtGenerator.generateToken(checkUser.id, checkUser.email_address);
+            const responseData = {
+                user_information: !!checkUser.email_address,
+                userProfile: checkUser,
+                token: CreateToken
+            };
+
+            // Invalidate OTP
+            await UserModel.updateUser({ id: checkUser.id }, { phone_password_code: null });
+
+            return await response.success(res, res.__('messages.loginSuccessfully'), responseData);
         } else {
             return await response.error(res, res.__('messages.userNotFound'));
         }
     } catch (error) {
         return await response.serverError(res, res.__('messages.internalServerError'));
-    } 
-}
+    }
+};
+
 
 export const loginWithPassword = async (req, res) => {
     try {

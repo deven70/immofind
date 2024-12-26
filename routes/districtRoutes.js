@@ -1,5 +1,5 @@
 import express from 'express';
-import { createDistrict, getDistrictsByCity, getDistrictById, updateDistrict, deleteDistrict} from '../controllers/districtController.js';
+import { createDistrict, getDistrictsByCity, getDistrictById, updateDistrict, deleteDistrict, getDistricts} from '../controllers/districtController.js';
 import { authorize } from '../middleware/authorization.js'; // Import the authorization middleware
 const router = express.Router();
 
@@ -7,15 +7,17 @@ const router = express.Router();
 router.post("/create", authorize, createDistrict);
 
 // Get districts by city
-router.post("/", authorize, getDistrictsByCity);
+router.post("/getbycity", authorize, getDistrictsByCity);
 
 // Get district by ID
-router.post("/getId", authorize, getDistrictById);
+router.post("/getbydistrict", authorize, getDistrictById);
 
 // Update a district
-router.put("/:id", authorize, updateDistrict);
+router.put("/update", authorize, updateDistrict);
 
 // Delete a district
-router.delete("/:id", authorize, deleteDistrict);
+router.delete("/delete", authorize, deleteDistrict);
+
+router.post('/', authorize, getDistricts);
 
 export default router;
