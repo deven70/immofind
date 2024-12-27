@@ -1,35 +1,72 @@
 import { PrismaClient } from '@prisma/client';
 import response from '../components/utils/response.js';
+import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
 export const createProjectTypeListing = async (req, res) => {
-  const { en_string, fr_string, icon, type, category, created_by, lang, key } = req.body;
+  const { en_string, fr_string, icon, type, category, key } = req.body;
 
   // Ensure the required fields are provided
   if (!en_string || !fr_string || !icon || !type || !category || !key) {
     return response.error(res, res.__('messages.allFieldsRequired'), null, 400);
   }
 
+  // Validate the key to ensure it does not contain spaces
+  if (/\s/.test(key)) {
+    return response.error(res, res.__('messages.keyCannotContainSpaces'), null, 400);
+  }
+
   try {
-    const checkExits =await prisma.projectTypeListings.findFirst({ 
-      where: { 
+    // Extract Bearer token from the Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return response.error(res, 'Authorization token missing or invalid', null, 401);
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // Decode the token to get the user ID (assuming JWT)
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return response.error(res, 'Invalid token', null, 401);
+    }
+
+    const created_by = decodedToken.id; // Adjust based on your token structure
+
+    // Check if the key already exists in the database
+    const existingKey = await prisma.projectTypeListings.findFirst({
+      where: { key: key },
+    });
+    if (existingKey) {
+      return response.error(res, res.__('messages.keyAlreadyExists'), null, 400);
+    }
+
+    // Check for existing project type listings for translations
+    const checkExists = await prisma.projectTypeListings.findFirst({
+      where: {
         lang_translations: {
           OR: [
             { en_string: en_string },
             { fr_string: fr_string },
           ],
         }
-      } 
+      }
     });
-    if(!checkExits){
-        // Step 1: Insert translations into LangTranslations
+
+    if (!checkExists) {
+      // Step 1: Insert translations into LangTranslations
       const langTranslation = await prisma.langTranslations.create({
         data: {
           en_string: en_string, // English translation
           fr_string: fr_string, // French translation
         },
       });
+
+      console.log(langTranslation);
+      const lang = res.getLocale();
 
       // Step 2: Insert the ProjectTypeListing and link it to the LangTranslation by ID
       const projectTypeListings = await prisma.projectTypeListings.create({
@@ -42,27 +79,28 @@ export const createProjectTypeListing = async (req, res) => {
               id: langTranslation.id, // Link to the newly created LangTranslation
             },
           },
-          key: key,
+          key: key, // Use the original key here
+          created_by: created_by
         },
       });
 
       // Step 3: Convert BigInt to string for response
       const responseData = {
         ...projectTypeListings,
+        name: lang === 'fr' ? langTranslation.fr_string : langTranslation.en_string,
         category: projectTypeListings.category.toString(), // Convert BigInt to string
       };
 
       return await response.success(res, res.__('messages.projectTypeListingCreatedSuccessfully'), responseData);
-    } else{
+    } else {
       return await response.error(res, res.__('messages.projectTypeCreated'));
     }
-    
+
   } catch (error) {
     console.error('Error creating project type listing:', error);
     return await response.serverError(res, res.__('messages.projectTypeListingCreationError'));
   }
 };
-
 
 export const getProjectTypeListAll = async (req, res) => {
   try {
@@ -110,6 +148,62 @@ export const getProjectTypeListAll = async (req, res) => {
     return response.serverError(res, error);
   }
 }
+
+
+
+export const getProjectTypeListById = async (req, res) => {
+  try {
+    const { property_type_id } = req.body;
+
+    // Validate input
+    if (!property_type_id) {
+      return response.error(res, res.__('messages.projectTypeIdRequired'));
+    }
+
+    const lang = res.getLocale();
+
+    // Fetch property type listing with translations
+    const propertyType = await prisma.projectTypeListings.findUnique({
+      where: { id: property_type_id },
+      include: {
+        lang_translations: true, // Include the related LangTranslations
+      },
+    });
+
+    // Check if property type was found
+    if (!propertyType) {
+      return response.error(res, res.__('messages.ProjectTypeNotFound'));
+    }
+
+    // Simplify the property type listing
+    const simplifiedListing = {
+      id: propertyType.id,
+      icon: propertyType.icon,
+      name: propertyType.lang_translations
+        ? lang === 'fr'
+          ? propertyType.lang_translations.fr_string // Fetch French translation
+          : propertyType.lang_translations.en_string // Fetch English translation
+        : 'No name available', // Fallback if no translation exists
+      type: propertyType.type,
+      key: propertyType.key,
+      category: propertyType.category?.toString() || null, // Serialize BigInt to string
+      created_at: propertyType.created_at,
+      updated_at: propertyType.updated_at,
+      created_by: propertyType.created_by,
+      updated_by: propertyType.updated_by,
+    };
+
+    // Return success response with the simplified listing
+    return response.success(res, res.__('messages.projectTypeFetchedSuccessfully'), simplifiedListing);
+  } catch (error) {
+    console.error('Error fetching project type:', error);
+    return response.error(res, res.__('messages.internalServerError'), { message: error.message });
+  }
+};
+
+
+
+
 export const getProjectTypeList = async (req, res) => {
 
   const { lang, page = 1, limit = 10 } = req.body; // Extract language, page, and limit from the request body
@@ -149,6 +243,8 @@ export const getProjectTypeList = async (req, res) => {
       category: listing.category?.toString() || null, // Serialize BigInt to string
       created_at: listing.created_at,
       updated_at: listing.updated_at,
+      updated_by : listing.updated_by,
+      created_by : listing.created_by
     }));
 
     // Return response with pagination metadata
@@ -207,15 +303,36 @@ export const getProjectTypeList = async (req, res) => {
 };
 
 export const updateProjectTypeListing = async (req, res) => {
-  const { id, en_string, fr_string, icon, type, category, updated_by, lang, key } = req.body;
+  const { id, en_string, fr_string, icon, type, category, lang, key } = req.body;
 
   // Ensure the required fields are provided
-  if (!id || !en_string || !fr_string || !icon || !type || !category || !updated_by || !lang || !key) {
+  if (!id || !en_string || !fr_string || !icon || !type || !category || !lang || !key) {
     return response.error(res, res.__('messages.allFieldsRequired'), null, 400);
   }
-    console.log(id);
+
+  // Validate the key to ensure it does not contain spaces
+  if (/\s/.test(key)) {
+    return response.error(res, res.__('messages.keyCannotContainSpaces'), null, 400);
+  }
 
   try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return response.error(res, 'Authorization token missing or invalid', null, 401);
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    // Decode the token to get the user ID (assuming JWT)
+    let decodedToken;
+    try {
+      decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (error) {
+      return response.error(res, 'Invalid token', null, 401);
+    }
+
+    const updated_by = decodedToken.id;
+
     // Step 1: Find the existing ProjectTypeListing
     const existingProjectTypeListing = await prisma.projectTypeListings.findUnique({
       where: { id },
@@ -228,16 +345,31 @@ export const updateProjectTypeListing = async (req, res) => {
       return response.error(res, res.__('messages.projectTypeListingNotFound'), null, 404);
     }
 
-    // Step 2: Update LangTranslations
+    // Step 2: Check if the key already exists in the database for a different listing
+    const existingKey = await prisma.projectTypeListings.findFirst({
+      where: {
+        key: key,
+        NOT: {
+          id: id, // Exclude the current listing being updated
+        },
+      },
+    });
+
+    if (existingKey) {
+      return response.error(res, res.__('messages.keyAlreadyExists'), null, 400);
+    }
+
+    // Step 3: Update LangTranslations
     const updatedLangTranslation = await prisma.langTranslations.update({
       where: { id: existingProjectTypeListing.lang_translations.id },
       data: {
         en_string: en_string, // English translation
         fr_string: fr_string, // French translation
-        updated_by: updated_by, // The updater's ID
+        updated_by: updated_by,
       },
     });
-    // Step 3: Update the ProjectTypeListing
+
+    // Step 4: Update the ProjectTypeListing
     const updatedProjectTypeListing = await prisma.projectTypeListings.update({
       where: { id },
       data: {
@@ -254,16 +386,19 @@ export const updateProjectTypeListing = async (req, res) => {
       },
     });
 
-    // Step 4: Convert BigInt to string for response
+    // Step 5: Convert BigInt to string for response
+    const lang = res.getLocale();
+
     const responseData = {
       ...updatedProjectTypeListing,
+      name: lang === 'fr' ? updatedLangTranslation.fr_string : updatedLangTranslation.en_string,
       category: updatedProjectTypeListing.category.toString(), // Convert BigInt to string
     };
 
-    return response.success( res, res.__('messages.projectTypeListingUpdatedSuccessfully'), responseData );
+    return response.success(res, res.__('messages.projectTypeListingUpdatedSuccessfully'), responseData);
   } catch (error) {
     console.error('Error updating project type listing:', error);
-    return response.error( res, res.__('messages.projectTypeListingUpdateError'));
+    return response.error(res, res.__('messages.projectTypeListingUpdateError'));
   }
 };
 

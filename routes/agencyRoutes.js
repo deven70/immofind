@@ -16,7 +16,7 @@ router.post('/sendmail', authorize, sendMail);
 router.post('/', authorize, getAllAgencies);
 
 // Get an agency by ID (protected)
-router.get('/:id', authorize, getAgencyById);
+router.post('/:id', authorize, getAgencyById);
 
 // Update an agency (protected)
 router.put('/:id', authorize, updateAgency);
