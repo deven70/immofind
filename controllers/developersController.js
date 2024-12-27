@@ -9,7 +9,7 @@ const prisma = new PrismaClient();
 
 // Create a developer
 export const createDeveloper = async (req, res) => {
-//   const user_id = req.user.id;
+  const userId = req.user.id;
 
   // Destructure request body
   const {
@@ -82,7 +82,7 @@ export const createDeveloper = async (req, res) => {
       taxNumber: tax_number,
       country_code:country_code,
       licenseNumber: license_number,
-      created_by: existingUser.id,
+      created_by: userId,
     };
 
     // Create the developer profile
@@ -157,11 +157,18 @@ export const getAllDevelopers = async (req, res) => {
   }
 };
 
-
+const transformBigIntToString = (obj) => {
+  return JSON.parse(
+    JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    )
+  );
+};
 // Update a developer
 export const updateDeveloper = async (req, res) => {
   try {
     const { id } = req.params;
+    const user_id = req.user.id;
 
     // Validate the UUID format
     const isValidUUID = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(id);
@@ -182,10 +189,16 @@ export const updateDeveloper = async (req, res) => {
     // Update developer details
     const updatedDeveloper = await prisma.developers.update({
       where: { id },
-      data: req.body,
+      data: {
+        ...req.body,            // Spread all fields from req.body
+        updated_by: user_id,
+        updated_at: new Date()    // Add 'updated_by' field
+      },
     });
 
-    return response.success(res, res.__('messages.developerUpdatedSuccessfully'), updatedDeveloper);
+    const safeResponse = transformBigIntToString(updatedDeveloper);
+
+    return response.success(res, res.__('messages.developerUpdatedSuccessfully'), safeResponse);
   } catch (err) {
     console.error('Error updating developer:', err);
     return response.serverError(res, res.__('messages.internalServerError'), err.message);
