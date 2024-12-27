@@ -127,7 +127,7 @@ export const getAllAgencies = async (req, res) => {
 
     if (!user_id) {
       return res.status(400).json({
-        success: false,
+        status: false,
         message: res.__('messages.userIdMissing'),
       });
     }
@@ -140,14 +140,14 @@ export const getAllAgencies = async (req, res) => {
     // If no agencies found
     if (!agencies || agencies.length === 0) {
       return res.status(404).json({
-        success: false,
+        status: false,
         message: res.__('messages.noAgenciesFound'),
       });
     }
 
     // Return success response with the agencies data
     return res.status(200).json({
-      success: true,
+      status: true,
       message: res.__('messages.agenciesRetrievedSuccessfully'),
       data: agencies,
     });
@@ -155,7 +155,7 @@ export const getAllAgencies = async (req, res) => {
     // Handle any errors that occur during the query
     console.error('Error fetching agencies:', err);
     return res.status(500).json({
-      success: false,
+      status: false,
       message: res.__('messages.internalServerError'),
       error: err.message,
     });
@@ -212,14 +212,14 @@ export const getAgencyById = async (req, res) => {
     if (agency) {
       // Return success response if agency is found
       return res.status(200).json({
-        success: true,
+        status: true,
         message: res.__('messages.agencyRetrievedSuccessfully'),
         data: agency,
       });
     } else {
       // Return error if agency is not found
       return res.status(404).json({
-        success: false,
+        status: false,
         message: res.__('messages.agencyNotFound'),
         data: null,
       });
@@ -228,7 +228,7 @@ export const getAgencyById = async (req, res) => {
     // Handle any errors that occur during the query
     console.error('Error fetching agency:', err);
     return res.status(500).json({
-      success: false,
+      status: false,
       message: res.__('messages.internalServerError'),
       error: err.message,
     });
@@ -255,14 +255,14 @@ export const updateAgency = async (req, res) => {
       });
 
       return res.status(200).json({
-        success: true,
+        status: true,
         message: res.__('messages.agencyUpdatedSuccessfully'),
         data: updatedAgency,
       });
     } else {
       // If no agency is found, return an error response
       return res.status(404).json({
-        success: false,
+        status: false,
         message: res.__('messages.agencyNotFound'),
         data: null,
       });
@@ -271,7 +271,7 @@ export const updateAgency = async (req, res) => {
     // Handle any errors during the update process
     console.error('Error updating agency:', err);
     return res.status(500).json({
-      success: false,
+      status: false,
       message: res.__('messages.internalServerError'),
       error: err.message,
     });

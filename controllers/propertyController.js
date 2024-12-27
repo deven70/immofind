@@ -213,6 +213,7 @@ export const getAllProperty = async (req, res) => {
           select: {
             full_name: true,
             image: true,
+            email_address:true,
           },
         },
         lang_translations_property_details_descriptionTolang_translations: {
@@ -335,6 +336,7 @@ export const getAllProperty = async (req, res) => {
         id: property.id,
         user_name: property.users?.full_name || null,
         user_image: property.users?.image || null,
+        email_address:property.users?.email_address || null,
         description,
         title,
         transaction: propertyType,

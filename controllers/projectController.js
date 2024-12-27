@@ -557,7 +557,7 @@ export const updateProject = async (req, res) => {
 
     if (!existingProject) {
       return res.status(404).json({
-        success: false,
+        status: false,
         message: res.__('messages.projectNotFound'),
       });
     }

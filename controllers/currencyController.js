@@ -70,7 +70,7 @@ export const createCurrency = async (req, res) => {
   
       if (!currencies.length) {
         return res.status(404).json({
-          success: false,
+          status: false,
           message: res.__('messages.currencyNotFound'),
         });
       }
@@ -85,14 +85,14 @@ export const createCurrency = async (req, res) => {
       }));
   
       return res.status(200).json({
-        success: true,
+        status: true,
         message: res.__('messages.currencyListedSuccessfully'),
         data: formattedCurrencies,
       });
     } catch (error) {
       console.error('Error fetching currencies:', error);
       return res.status(500).json({
-        success: false,
+        status: false,
         message: res.__('messages.internalServerError'),
         error: error.message,
       });
@@ -160,7 +160,7 @@ export const createCurrency = async (req, res) => {
   
       if (!id) {
         return res.status(400).json({
-          success: false,
+          status: false,
           message: res.__('messages.missingCurrencyId'),
         });
       }
@@ -171,7 +171,7 @@ export const createCurrency = async (req, res) => {
   
       if (!existingCurrency) {
         return res.status(404).json({
-          success: false,
+          status: false,
           message: res.__('messages.currencyNotFound'),
         });
       }
@@ -181,13 +181,13 @@ export const createCurrency = async (req, res) => {
       });
   
       return res.status(200).json({
-        success: true,
+        status: true,
         message: res.__('messages.currencyDeletedSuccessfully'),
       });
     } catch (error) {
       console.error('Error deleting currency:', error);
       return res.status(500).json({
-        success: false,
+        status: false,
         message: res.__('messages.internalServerError'),
         error: error.message,
       });
