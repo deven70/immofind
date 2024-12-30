@@ -178,6 +178,11 @@
 		"invalidDistrictId": "invalid DistrictId",
 		"neighborhoodFetchedSuccessfully": "neighborhood Fetched Successfully",
 		"neighborhoodsFetchedSuccessfully": "neighborhoods Fetched Successfully",
-		"neighborhoodUpdatedSuccessfully": "neighborhood Updated Successfully"
+		"neighborhoodUpdatedSuccessfully": "neighborhood Updated Successfully",
+		"cityUpdatedSuccessfully": "city Updated Successfully",
+		"cityFetchedSuccessfully": "city Fetched Successfully",
+		"checkDeviceTypeRole": "check Device TypeRole",
+		"agencyPackageFetchedSuccessfully": "agency Package Fetched Successfully",
+		"projectTypeFetchedSuccessfully": "project Type Fetched Successfully"
 	}
 }

@@ -98,6 +98,7 @@ export const createPropertyType = async (req, res) => {
       const newPropertyType = await prisma.propertyTypes.create({
         data: {
           title: langTranslation.id, // Reference the LangTranslation entry
+          created_by:created_by,
           created_at: new Date(),
         },
       });

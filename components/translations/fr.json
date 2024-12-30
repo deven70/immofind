@@ -178,6 +178,11 @@
 		"invalidDistrictId": "ID de district invalide",
 		"neighborhoodFetchedSuccessfully": "quartier récupéré avec succès",
 		"neighborhoodsFetchedSuccessfully": "quartiers récupérés avec succès",
-		"neighborhoodUpdatedSuccessfully": "quartier mis à jour avec succès"
+		"neighborhoodUpdatedSuccessfully": "quartier mis à jour avec succès",
+		"cityUpdatedSuccessfully": "ville mise à jour avec succès",
+		"cityFetchedSuccessfully": "ville récupérée avec succès",
+		"checkDeviceTypeRole": "vérifier le type de périphériqueRôle",
+		"agencyPackageFetchedSuccessfully": "Package d'agence récupéré avec succès",
+		"projectTypeFetchedSuccessfully": "Type de projet récupéré avec succès"
 	}
 }
